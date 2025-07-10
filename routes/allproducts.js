@@ -2,7 +2,6 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import fetchadmin from '../middleware/fetchadmin.js';
-import Necklacedet from '../models/Necklace.js';
 import Allproducts from '../models/AllProducts.js';
 
 dotenv.config();

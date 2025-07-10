@@ -14,6 +14,54 @@ dotenv.config();
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
+
+// Route 1 : Create admin using : POST "/admin/adminauth/createadmin"
+router.post('/createadmin', [
+    body('name', "Enter a valid name min char is 3").isLength({ min: 3 }),
+    body('email').isEmail(),
+    body('password').isLength({ min: 5 })
+], async (req, res) => {
+    let success = false;
+    const error = validationResult(req);
+    if (!error.isEmpty()) {
+        return res.status(400).json({ success, error: error.array() });
+    }
+    try {
+        // check whether the admin with the email exists already.
+        let admin = await Admin.findOne({ email: req.body.email });
+        if (admin) {
+            return res.status(400).json({ success, error: "Sorry a admin with this email already exists." })
+        }
+
+        // Creating secure password
+        const salt = await bcrypt.genSalt(10);
+        const secPass = await bcrypt.hash(req.body.password, salt);
+
+        // Creating new Admin
+        admin = await Admin.create({
+            name: req.body.name,
+            email: req.body.email,
+            password: secPass
+        });
+
+        const data = {
+            admin: {
+                id: admin.id
+            }
+        }
+
+        const authtoken = jwt.sign(data, JWT_SECRET);
+        success = true;
+
+        res.json({ success, authtoken });
+    }
+    catch (err) {
+        console.log(err.message);
+        res.status(500).send("Internal server error occured.");
+    }
+
+});
+
 // Route 2 : Authanticate an Admin using : POST "/admin/adminauth/loginadmin".
 router.post('/loginadmin', [
     body('email', "Enter a valid email").isEmail(),
